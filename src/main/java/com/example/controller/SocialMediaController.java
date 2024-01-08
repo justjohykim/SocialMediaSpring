@@ -42,15 +42,21 @@ public class SocialMediaController {
     MessageRepository messageRepository;
 
     @Autowired
-    public SocialMediaController(AccountService accountService){
+    public SocialMediaController(AccountService accountService,MessageService messageService){
         this.accountService = accountService;
+        this.messageService = messageService;
     } 
 
-
+    
+    // public SocialMediaController(MessageService messageService){
+    //     this.messageService = messageService;
+    // }
 
 
     @PostMapping("register")
     public ResponseEntity<Account> createAccount(@RequestBody Account account){
+
+        
         if(!account.getUsername().isBlank() && account.getPassword().length() >= 4 ){
             return accountService.saveAccount(account);
         }
@@ -58,8 +64,73 @@ public class SocialMediaController {
             return ResponseEntity.status(400).build();
         }
         
+    }
 
+    @PostMapping("login")
+    public ResponseEntity<Account> login(@RequestBody Account account){
+        return accountService.loginAccount(account);
+    }
+
+    @PostMapping("messages")
+    public ResponseEntity<Message> createMessage(@RequestBody Message message){
+        // List<Account> allAccounts = accountRepository.findAll();
+        // Boolean within = false;
+        // int posted = message.getPosted_by();
+        // int account_id = 0;
+        // System.out.println(posted);
+        // for(int i = 0; i< allAccounts.size(); i++){
+        //     account_id = allAccounts.get(i).getAccount_id();
+        //     System.out.println(account_id);
+        //     if(posted == account_id){
+        //         within = true;
+        //     }
+        // }
+        if(message.getMessage_text().length() > 255 || message.getMessage_text().isBlank()){
+            return ResponseEntity.status(400).build();
+            
+        }
+        return messageService.saveMessage(message);
         
+    }
+    @GetMapping("messages")
+    public List<Message> getAllMessages(){
+        return messageService.getAllMessages();
+    }
+
+    @GetMapping("/messages/{message_id}")
+    public ResponseEntity<Message> getMessageByMessageId(@PathVariable int message_id){
+        Message message = messageService.getMessageByMessageId(message_id);
+        if(message != null){
+            return new ResponseEntity<Message>(message, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    
+    @DeleteMapping("/messages/{message_id}")
+    public ResponseEntity<Integer> deleteMessageByMessageId(@PathVariable int message_id){
+        int returned = messageService.deleteMessageByMessageId(message_id);
+        if(returned > 0 ){
+            return new ResponseEntity<>(returned, HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+    }
+    @PatchMapping("/messages/{message_id}")
+    public ResponseEntity<Integer> updateMessagebyMessageId(@PathVariable int message_id, @RequestBody Message message_text){
+        int returned = messageService.updateMessagebyMessageId(message_id,message_text);
+        if(returned > 0 ){
+            return new ResponseEntity<>(returned, HttpStatus.OK);
+        }
+        else{
+            return ResponseEntity.status(400).build();
+        }
+    }
+
+    @GetMapping("/accounts/{account_id}/messages")
+    public List<Message> getAllMessagesbyAccount(@PathVariable int account_id){
+        List<Message> allMessages = messageService.getAllMessagesbyAccount(account_id);
+        return allMessages;
     }
 
 }
